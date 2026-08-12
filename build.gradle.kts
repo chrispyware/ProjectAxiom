@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    group = "projectaxiom"
+    group = "com.chrispyware.axiom"
     version = "0.1.0-SNAPSHOT"
 
     repositories {

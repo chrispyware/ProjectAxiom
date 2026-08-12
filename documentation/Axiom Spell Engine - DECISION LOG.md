@@ -278,3 +278,56 @@ Initial development targets Windows. Build configuration should avoid unnecessar
 * The version catalog creates more maintenance than value for the project’s size.  
 * macOS or Linux becomes an active development or testing target.  
 * Runtime packaging imposes a different minimum Java requirement.
+
+# **TD-005:** Initial Source and Module Structure
+
+August 11, 2026  
+**Status:** Accepted  
+**Category:** Technical  
+**Decision:** Use `com.chrispyware.axiom` as the Gradle group and base Java namespace. Engine code resides beneath `com.chrispyware.axiom.engine`; game code resides beneath `com.chrispyware.axiom.game`. Project Axiom may depend on Axiom Spell Engine, while the engine must not depend on game code.   
+**Alternatives considered:** 
+
+**Context**
+
+* Project Axiom and the Axiom Spell Engine are being developed in the same repository but represent separate architectural units. The game uses the engine, while the engine should remain independent of Project Axiom’s game-specific classes, rules, content, and assets.  
+* A clear package and module structure is needed to communicate ownership, prevent circular dependencies, and establish predictable locations for source code and tests. Separate Gradle subprojects allow Gradle and the Java compiler to enforce the dependency direction rather than relying only on developer discipline.  
+* The reverse-domain namespace `com.chrispyware.axiom` provides a stable base for the project. Engine code and game code will be distinguished using the additional `engine` and `game` qualifiers.  
+* The initial build will contain two Gradle subprojects:  
+* :engine  
+* :game  
+* The `game` subproject will depend on `engine`. The `engine` subproject will not depend on `game`.
+
+**Goals/Consequences**
+
+* Engine production code will reside under:  
+  engine/src/main/java/com/chrispyware/axiom/engine/  
+* Engine tests will reside under:  
+  engine/src/test/java/com/chrispyware/axiom/engine/  
+* Game production code will reside under:  
+  game/src/main/java/com/chrispyware/axiom/game/  
+* Game tests will reside under:  
+  game/src/test/java/com/chrispyware/axiom/game/  
+* The Gradle group will be:  
+  com.chrispyware.axiom  
+* Game code may import and use engine code.  
+* Engine code cannot import game code because the `engine` subproject has no dependency on `game`.  
+* Engine systems must not contain Project Axiom-specific concepts such as named spells, enemies, story progression, or game-specific mechanisms.  
+* Shared low-level facilities—such as timing, rendering, input, collision queries, and mathematical primitives—may be implemented in the engine.  
+* Game-specific behavior—such as the fireball spell, player controller, enemies, and puzzle rules—will be implemented in the game.  
+* Each subproject can maintain its own production resources and tests.  
+* The separation introduces a small amount of additional Gradle configuration.  
+* Moving a class across the engine/game boundary may require package, import, test, and build-configuration changes.  
+* A separate launcher or tools subproject may be introduced later when an actual packaging or tooling requirement justifies it.  
+* New packages will be created as needed rather than pre-populating the repository with empty package trees. 
+
+**Reconsider if**
+
+* A class or subsystem cannot be assigned clearly to either the engine or game after concrete use cases have been implemented.  
+* The game repeatedly needs access to engine internals that are not suitable as a public engine API.  
+* The two-subproject structure causes substantial development or packaging friction.  
+* A second executable—such as an asset processor, level tool, or dedicated test application—requires its own subproject.  
+* Desktop packaging requires the launcher and native dependencies to be isolated from game logic.  
+* The engine is reused by another game, requiring stronger API, resource, or publication boundaries.  
+* Platform-specific launchers become necessary for Windows, macOS, or Linux.  
+* The project name or organizational namespace changes.  
+* `com.chrispyware.axiom.engine` or `com.chrispyware.axiom.game` no longer accurately describes the ownership of the contained code.
